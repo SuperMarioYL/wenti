@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "wenti",
+  "github": "https://github.com/SuperMarioYL/wenti",
+  "host": "wenti.lei6393.com",
+  "lang": { "primary": "zh", "toggle": true },
+  "accent": ["#b8623f", "#9c4a2e", "#d4a574"],
+  "hero": {
+    "eyebrow": { "zh": "正向文风 · 跨篇一致 · 本地可跑", "en": "positive voice · serial-consistent · runs local" },
+    "headline": {
+      "zh": "给公众号长文装上一种\n可命名的中文文体",
+      "en": "Give your long-form writing\na nameable Chinese voice"
+    },
+    "sub": {
+      "zh": "三联生活周刊体这样的编辑视角，做成可安装的 Skill——连载到第 5 篇，不用再每篇手动 re-voice。",
+      "en": "Editorial voices like 三联体 as an installable Skill — your serial stays in one voice past essay #5."
+    },
+    "command": "wenti score draft.md --pack sanlian"
+  },
+  "advantages": [
+    {
+      "title": { "zh": "装上一种命名文体，不是只去掉 AI 味", "en": "Adopt a named voice, don't just strip AI slop" },
+      "body": { "zh": "别人的工具只把 AI 味洗掉，停在“不坏但也不是什么”。Wenti 给你正向装上一种可命名的编辑视角——三联体 pack 是 hand-curated 的文风本身。", "en": "Other tools only wash out AI-slop, stopping at “not bad but not anything”. Wenti positively installs a nameable editorial voice — the 三联体 pack IS the hand-curated style." },
+      "chips": ["› 三联体 pack", "› 不是 anti-slop 过滤器"]
+    },
+    {
+      "title": { "zh": "连载第 5 篇，还在同一种文体", "en": "Stay in one voice past essay #5" },
+      "body": { "zh": "草稿写到第 5 篇想统一回三联体视角，今天得每篇手动 re-voice。一条命令固定文体，agent 跨篇保持同一种命名文风。", "en": "Want essay #5 back in 三联体 voice? Today you re-voice each one by hand. One command fixes the voice; your agent keeps the same named style across the serial." },
+      "chips": ["› 跨篇 voice 一致", "› 一条命令固定文体"]
+    },
+    {
+      "title": { "zh": "量出 bare 到文体的差距", "en": "See the gap from bare to styled" },
+      "body": { "zh": "同一篇草稿，bare 模型输出和文体 pack 输出各打一次分——句式 / 用词 / 节奏 / 视角，差距看得见：1.12 → 3.82。", "en": "Score the same draft twice — bare model output vs styled pack output — on structure / diction / rhythm / angle. The gap is visible: 1.12 → 3.82." },
+      "chips": ["› 句式 / 用词 / 节奏 / 视角", "› 1.12 → 3.82"]
+    },
+    {
+      "title": { "zh": "离线先自检，不调模型也能跑", "en": "Self-check offline, runs without a model key" },
+      "body": { "zh": "没有 API key 也能先跑——本地启发式打分，开箱即用。配好 key 再切到模型打分，同一套报告。", "en": "No API key? Run the local heuristic scorer out of the box. Add a key to switch to model scoring — same report." },
+      "chips": ["› dry-run 启发式", "› 开箱即用"]
+    }
+  ],
+  "scene": { "kind": "particle-field" },
+  "cta": {
+    "headline": { "zh": "先给你的下一篇装上文体", "en": "Give your next essay a voice" },
+    "sub": { "zh": "pipx install wenti，本地优先，MIT。", "en": "pipx install wenti — local-first, MIT." },
+    "button": { "zh": "GitHub", "en": "GitHub" }
+  },
+  "footer": { "tag": { "zh": "MIT · 本地优先 · 创作者 Skill", "en": "MIT · local-first · a creator Skill" } }
+}
