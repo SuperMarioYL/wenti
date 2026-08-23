@@ -1,0 +1,29 @@
+# Wenti 文体 pack registry
+# 每个 pack 对应一个同名的 markdown 文件（<name>.md），含 voice card + few-shots。
+# v0.1 只随包发布 sanlian（三联生活周刊体）；南方周末体 / GQ报道体 为 premium / 后续。
+
+schema_version: 1
+default_pack: sanlian
+
+packs:
+  - name: sanlian
+    lineage: 三联生活周刊体
+    summary: |
+      三联生活周刊式的城市文化观察：冷静、细节、长句铺陈、第一人称旁观视角，
+      把一个普通人 / 一件日常物写成时代的切片。
+    premium: false
+    available: true
+    moat: true            # v0.1 的护城河内容：hand-curated few-shots + voice card
+    path: sanlian.md
+  - name: nanfangzhoumo
+    lineage: 南方周末体
+    summary: 南方周末式调查 / 报道文体。premium pack，v0.1 不随包发布。
+    premium: true
+    available: false
+    path: nanfangzhoumo.md
+  - name: gq
+    lineage: GQ报道体
+    summary: GQ 中文式人物特稿：场景化、对话驱动、人物弧线。premium pack，v0.1 不随包发布。
+    premium: true
+    available: false
+    path: gq.md

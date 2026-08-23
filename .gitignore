@@ -1,0 +1,57 @@
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+parts/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+MANIFEST
+
+# virtual envs / local installs
+.venv/
+venv/
+env/
+ENV/
+
+# test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# local scratch
+*~
+
+# build scratch & control files (do not ship)
+BUILD_SETUP_NEXT_STEPS.md
+PUBLISH_BLOCKED.md
+.builder_*
+.build_metadata*
+.build_ctx.json
+_build_ctx.json
+.stage_*
+.spawn.*
+
+# do not version assistant-local config
+.claude/
+CLAUDE.md

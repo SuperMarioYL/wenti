@@ -1,0 +1,44 @@
+# WentiPack + Rubric + ScoreReport — type contract (schema)
+#
+# 这是 v0.1 的单一事实源：pack / rubric / 报告的结构。score.py 的输出
+# 必须满足 ScoreReport。pack markdown 的 frontmatter 必须满足 WentiPack。
+
+version: 1
+
+WentiPack:
+  description: 一个命名、curated 的中文长文体单元。
+  required_fields:
+    name:        { type: str,  desc: "ASCII id, e.g. sanlian" }
+    lineage:     { type: str,  desc: "命名文体的中文名, e.g. 三联生活周刊体" }
+    voice_card:  { type: str,  desc: "1 段编辑视角身份，prompt 中作为风格锚" }
+    few_shots:   { type: list, desc: "curated 范例段落（moat 内容），每项 {text, note?}" }
+  optional_fields:
+    notes:       { type: str, desc: "pack markdown body，给人读的 voice notes" }
+
+Rubric:
+  description: 风格评分 rubric，把"文风"量化成可证伪的 0-5 子分。
+  scale: { min: 0, max: 5, desc: "0=完全未达成 / 5=范例级" }
+  dimensions:
+    句式:
+      weight: 0.3
+      desc: "句子结构：长短交替、从句铺陈、排比与设问，拒绝通篇陈述短句。"
+    用词:
+      weight: 0.3
+      desc: "用词：具象、感官、文学性，拒绝 AI-slop 套话（综上所述/在当今社会）。"
+    节奏:
+      weight: 0.2
+      desc: "节奏：段落长短起伏、停顿与推进，拒绝均匀信息流。"
+    视角:
+      weight: 0.2
+      desc: "视角：第一人称旁观、具体时空坐标，拒绝无立场的全知概述。"
+  weight_constraint: "weights 之和 = 1.0；total = Σ(weight_i × sub_score_i)"
+
+ScoreReport:
+  description: 一次 score 的返回结构。
+  required_fields:
+    pack:        { type: str,  desc: "使用的 pack id" }
+    draft:       { type: str,  desc: "被打分的草稿（可截断）" }
+    sub_scores:  { type: dict, desc: "{维度: 0-5 float}，键必须 ⊆ Rubric.dimensions" }
+    total:       { type: float, desc: "加权总分 0-5" }
+    suggestions: { type: list, desc: "rewrite 建议，每项 {dim, issue, rewrite}" }
+    dry_run:     { type: bool, desc: "True=本地启发式打分未调用模型" }

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wenti"
+version = "0.1.0"
+description = "正向中文长文体 taste 库 — 把三联生活周刊体这样的编辑视角做成创作者 Skill。"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "SuperMarioYL" }]
+keywords = ["文体", "taste", "skill", "公众号", "三联", "长文体", "agent", "rubric", "llm-as-judge"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+  "Topic :: Text Processing :: General",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: Chinese (Simplified)",
+]
+dependencies = [
+  "openai>=1.40",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+  "rich>=13.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/SuperMarioYL/wenti"
+Issues = "https://github.com/SuperMarioYL/wenti/issues"
+
+[project.scripts]
+wenti = "wenti.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["wenti"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"wenti/packs" = "wenti/packs"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

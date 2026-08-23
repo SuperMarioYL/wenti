@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360"
+     font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+     role="img" aria-label="架构：SKILL.md → CLI → 文体 pack + rubric → 国产模型 → 风格评分报告">
+  <defs>
+    <marker id="ah-l" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#B9B9C2"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="360" fill="#F5F5F7"/>
+
+  <!-- SKILL.md wrapper pill (agent invokes Skill -> wraps the CLI) -->
+  <rect x="60" y="44" width="104" height="36" rx="10" fill="#5E5CE6" fill-opacity="0.10" stroke="#5E5CE6" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="112" y="67" text-anchor="middle" font-size="13" font-weight="600" fill="#4B3FC4">SKILL.md</text>
+  <line x1="112" y1="82" x2="112" y2="148" stroke="#5E5CE6" stroke-opacity="0.5" stroke-width="1.5" stroke-dasharray="3 4"/>
+
+  <!-- static connectors -->
+  <g stroke="#C9C9D0" stroke-width="1.5" fill="none">
+    <line x1="200" y1="190" x2="240" y2="190" marker-end="url(#ah-l)"/>
+    <line x1="416" y1="190" x2="456" y2="190" marker-end="url(#ah-l)"/>
+    <line x1="632" y1="190" x2="672" y2="190" marker-end="url(#ah-l)"/>
+  </g>
+  <!-- marching-dash data flow (方向 = 数据方向, 右流) -->
+  <g stroke-width="1.5" fill="none" stroke-linecap="round">
+    <line x1="200" y1="190" x2="236" y2="190" stroke="#0071E3" stroke-opacity="0.5" stroke-dasharray="6 10">
+      <animate attributeName="stroke-dashoffset" from="32" to="0" dur="1.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="416" y1="190" x2="452" y2="190" stroke="#5E5CE6" stroke-opacity="0.5" stroke-dasharray="6 10">
+      <animate attributeName="stroke-dashoffset" from="32" to="0" dur="1.6s" begin="-0.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="632" y1="190" x2="668" y2="190" stroke="#10A37F" stroke-opacity="0.5" stroke-dasharray="6 10">
+      <animate attributeName="stroke-dashoffset" from="32" to="0" dur="1.6s" begin="-1.0s" repeatCount="indefinite"/>
+    </line>
+  </g>
+  <!-- data packets along connectors -->
+  <g>
+    <circle r="3" fill="#0071E3">
+      <animateMotion path="M200,190 L236,190" dur="2.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="3" fill="#5E5CE6">
+      <animateMotion path="M416,190 L452,190" dur="2.4s" begin="-0.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.4s" begin="-0.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="3" fill="#10A37F">
+      <animateMotion path="M632,190 L668,190" dur="2.4s" begin="-1.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.4s" begin="-1.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- nodes (breathing fill-opacity 0.10 <-> 0.18, staggered) -->
+  <g>
+    <rect x="24"  y="150" width="176" height="80" rx="15" fill="#0071E3" fill-opacity="0.10" stroke="#0071E3" stroke-width="1.5">
+      <animate attributeName="fill-opacity" values="0.10;0.18;0.10" keyTimes="0;0.5;1" dur="3.2s" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" repeatCount="indefinite"/>
+    </rect>
+    <text x="112" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#0A4F9E">CLI · typer</text>
+    <text x="112" y="204" text-anchor="middle" font-size="11" fill="#6E6E73">list · score · rewrite</text>
+
+    <rect x="240" y="150" width="176" height="80" rx="15" fill="#5E5CE6" fill-opacity="0.10" stroke="#5E5CE6" stroke-width="1.5">
+      <animate attributeName="fill-opacity" values="0.10;0.18;0.10" keyTimes="0;0.5;1" dur="3.2s" begin="-0.8s" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" repeatCount="indefinite"/>
+    </rect>
+    <text x="328" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#4B3FC4">文体 pack + rubric</text>
+    <text x="328" y="204" text-anchor="middle" font-size="11" fill="#6E6E73">sanlian.md · score.py</text>
+
+    <rect x="456" y="150" width="176" height="80" rx="15" fill="#10A37F" fill-opacity="0.10" stroke="#10A37F" stroke-width="1.5">
+      <animate attributeName="fill-opacity" values="0.10;0.18;0.10" keyTimes="0;0.5;1" dur="3.2s" begin="-1.6s" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" repeatCount="indefinite"/>
+    </rect>
+    <text x="544" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#0B6B53">国产模型 API</text>
+    <text x="544" y="204" text-anchor="middle" font-size="11" fill="#6E6E73">qwen · doubao · kimi · glm</text>
+
+    <rect x="672" y="150" width="176" height="80" rx="15" fill="#0071E3" fill-opacity="0.10" stroke="#0071E3" stroke-width="1.5">
+      <animate attributeName="fill-opacity" values="0.10;0.18;0.10" keyTimes="0;0.5;1" dur="3.2s" begin="-2.4s" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" repeatCount="indefinite"/>
+    </rect>
+    <text x="760" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#0A4F9E">ScoreReport</text>
+    <text x="760" y="204" text-anchor="middle" font-size="11" fill="#6E6E73">句式/用词/节奏/视角</text>
+  </g>
+  <text x="440" y="280" text-anchor="middle" font-size="12" fill="#6E6E73">一个进程 · 一次国产模型 API 调用 · agent 与人走同一条打分路径</text>
+</svg>
