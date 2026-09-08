@@ -1,49 +1,215 @@
 {
-  "schema": 1,
+  "schema": 3,
   "name": "wenti",
   "github": "https://github.com/SuperMarioYL/wenti",
   "host": "wenti.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#b8623f", "#9c4a2e", "#d4a574"],
+  "palette": "auto",
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_style": "neon-particle",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
-    "eyebrow": { "zh": "正向文风 · 跨篇一致 · 本地可跑", "en": "positive voice · serial-consistent · runs local" },
     "headline": {
-      "zh": "给公众号长文装上一种\n可命名的中文文体",
-      "en": "Give your long-form writing\na nameable Chinese voice"
+      "en": "Make editorial feedback repeatable across drafts.",
+      "zh": "让不同草稿使用同一套编辑反馈标准。"
     },
     "sub": {
-      "zh": "三联生活周刊体这样的编辑视角，做成可安装的 Skill——连载到第 5 篇，不用再每篇手动 re-voice。",
-      "en": "Editorial voices like 三联体 as an installable Skill — your serial stays in one voice past essay #5."
+      "en": "Wenti packages an editorial voice card, examples and a four-dimension rubric for Chinese long-form writing. It offers local heuristic scoring and optional model-based scoring or rewriting.",
+      "zh": "Wenti 将编辑视角卡、示例与四维评分标准打包，用于中文长文。它提供本地启发式评分，以及可选模型评分或重写。"
     },
-    "command": "wenti score draft.md --pack sanlian"
+    "href": "#quickstart"
   },
   "advantages": [
     {
-      "title": { "zh": "装上一种命名文体，不是只去掉 AI 味", "en": "Adopt a named voice, don't just strip AI slop" },
-      "body": { "zh": "别人的工具只把 AI 味洗掉，停在“不坏但也不是什么”。Wenti 给你正向装上一种可命名的编辑视角——三联体 pack 是 hand-curated 的文风本身。", "en": "Other tools only wash out AI-slop, stopping at “not bad but not anything”. Wenti positively installs a nameable editorial voice — the 三联体 pack IS the hand-curated style." },
-      "chips": ["› 三联体 pack", "› 不是 anti-slop 过滤器"]
+      "title": {
+        "en": "Reuse named criteria",
+        "zh": "复用命名标准"
+      },
+      "body": {
+        "en": "The same pack can be selected for each draft.",
+        "zh": "每篇草稿可选择相同 pack。"
+      }
     },
     {
-      "title": { "zh": "连载第 5 篇，还在同一种文体", "en": "Stay in one voice past essay #5" },
-      "body": { "zh": "草稿写到第 5 篇想统一回三联体视角，今天得每篇手动 re-voice。一条命令固定文体，agent 跨篇保持同一种命名文风。", "en": "Want essay #5 back in 三联体 voice? Today you re-voice each one by hand. One command fixes the voice; your agent keeps the same named style across the serial." },
-      "chips": ["› 跨篇 voice 一致", "› 一条命令固定文体"]
+      "title": {
+        "en": "Inspect the rubric",
+        "zh": "检查评分标准"
+      },
+      "body": {
+        "en": "Dimension weights and local rules are source visible.",
+        "zh": "维度权重与本地规则均有源码。"
+      }
     },
     {
-      "title": { "zh": "量出 bare 到文体的差距", "en": "See the gap from bare to styled" },
-      "body": { "zh": "同一篇草稿，bare 模型输出和文体 pack 输出各打一次分——句式 / 用词 / 节奏 / 视角，差距看得见：1.12 → 3.82。", "en": "Score the same draft twice — bare model output vs styled pack output — on structure / diction / rhythm / angle. The gap is visible: 1.12 → 3.82." },
-      "chips": ["› 句式 / 用词 / 节奏 / 视角", "› 1.12 → 3.82"]
-    },
-    {
-      "title": { "zh": "离线先自检，不调模型也能跑", "en": "Self-check offline, runs without a model key" },
-      "body": { "zh": "没有 API key 也能先跑——本地启发式打分，开箱即用。配好 key 再切到模型打分，同一套报告。", "en": "No API key? Run the local heuristic scorer out of the box. Add a key to switch to model scoring — same report." },
-      "chips": ["› dry-run 启发式", "› 开箱即用"]
+      "title": {
+        "en": "Run without a model",
+        "zh": "无需模型运行"
+      },
+      "body": {
+        "en": "Explicit dry-run keeps scoring local.",
+        "zh": "明确 dry-run 让评分留在本地。"
+      }
     }
   ],
-  "scene": { "kind": "particle-field" },
-  "cta": {
-    "headline": { "zh": "先给你的下一篇装上文体", "en": "Give your next essay a voice" },
-    "sub": { "zh": "pipx install wenti，本地优先，MIT。", "en": "pipx install wenti — local-first, MIT." },
-    "button": { "zh": "GitHub", "en": "GitHub" }
+  "demo": {
+    "title": {
+      "en": "Run it on a complete example",
+      "zh": "运行完整示例"
+    },
+    "note": {
+      "en": "The example includes an original Chinese scene and runs score_draft with dry_run=True so no credentials or network are used.",
+      "zh": "示例包含原创中文场景，并以 dry_run=True 运行 score_draft，不使用凭据或网络。"
+    },
+    "source": "https://github.com/SuperMarioYL/wenti/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": "Recorded run",
+        "body": "Local heuristic scoring of an original short Chinese fixture using the bundled sanlian pack; no model judgment, rewrite or measured editorial improvement.",
+        "command": ".venv/bin/python examples/presentation-demo.py",
+        "output": "{\n  \"input\": \"清晨，菜市场的灯还亮着。老周把白菜码在摊位上，水汽从叶脉间慢慢散开。\\n\\n街道醒了。\\n\\n他为什么还留在这里？女儿的信压在棋盘下面，时间在纸角留下浅浅的褶皱。\",\n  \"pack\": \"sanlian\",\n  \"dry_run\": true,\n  \"sub_scores\": {\n    \"句式\": 2.0,\n    \"用词\": 4.1,\n    \"节奏\": 2.5,\n    \"视角\": 2.5\n  },\n  \"total\": 2.83\n}",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
+      }
+    ]
   },
-  "footer": { "tag": { "zh": "MIT · 本地优先 · 创作者 Skill", "en": "MIT · local-first · a creator Skill" } }
+  "quickstart": {
+    "title": {
+      "en": "Try it locally",
+      "zh": "本地上手"
+    },
+    "body": {
+      "en": "The example includes an original Chinese scene and runs score_draft with dry_run=True so no credentials or network are used.",
+      "zh": "示例包含原创中文场景，并以 dry_run=True 运行 score_draft，不使用凭据或网络。"
+    },
+    "steps": [
+      {
+        "title": {
+          "en": "Install from source",
+          "zh": "从源码安装"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/wenti.git\ncd wenti\nuv venv .venv\nuv pip install --python .venv/bin/python -e .\nsource .venv/bin/activate"
+      },
+      {
+        "title": {
+          "en": "Run the included example",
+          "zh": "运行随仓示例"
+        },
+        "code": ".venv/bin/python examples/presentation-demo.py"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "en": "The heuristic rewards specific wording and sentence/paragraph features. Its score is not an objective measure of writing quality or an independent editorial assessment.",
+      "zh": "启发式奖励特定用词和句段特征；分数不是客观写作质量，也不是独立编辑评估。"
+    },
+    {
+      "en": "The bundled sanlian label names a project pack; this page does not claim endorsement by a publication.",
+      "zh": "随仓 sanlian 名称指项目 pack，不表示刊物背书。"
+    },
+    {
+      "en": "The offline demo scores an original short fixture and does not demonstrate a model rewrite or improved reader outcomes.",
+      "zh": "离线示例只为原创短 fixture 评分，不展示模型重写或读者效果提升。"
+    }
+  ],
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
+  },
+  "story": {
+    "intro": {
+      "title": {
+        "en": "A concrete task",
+        "zh": "从实际任务出发"
+      },
+      "body": {
+        "en": "Repeatedly restating a preferred writing direction makes drafts harder to compare. A named pack and explicit rubric let a writer reuse the same criteria while retaining editorial judgment.",
+        "zh": "反复重述偏好文风会让草稿难以比较。命名 pack 与明确标准便于作者重复使用同一组条件，同时保留编辑判断。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "Follow the operation",
+          "zh": "处理过程"
+        },
+        "body": {
+          "en": "The pack loader reads voice-card metadata and examples. score_draft chooses an explicit dry-run heuristic or a configured model path. Four sub-scores are combined by rubric weights and accompanied by suggestions. rewrite uses the selected pack through its own path.",
+          "zh": "pack 加载器读取视角卡元数据与示例。score_draft 选择明确 dry-run 启发式或已配置模型路径；四个分项按权重合成并附建议。rewrite 使用独立路径应用选定 pack。"
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "en": "Follow the operation",
+            "zh": "处理过程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "How Wenti works",
+          "zh": "Wenti 的工作方式"
+        },
+        "body": {
+          "en": "The pack loader reads voice-card metadata and examples. score_draft chooses an explicit dry-run heuristic or a configured model path. Four sub-scores are combined by rubric weights and accompanied by suggestions. rewrite uses the selected pack through its own path.",
+          "zh": "pack 加载器读取视角卡元数据与示例。score_draft 选择明确 dry-run 启发式或已配置模型路径；四个分项按权重合成并附建议。rewrite 使用独立路径应用选定 pack。"
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "en": "How Wenti works",
+            "zh": "Wenti 的工作方式"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Connect the pieces",
+          "zh": "输入与输出"
+        },
+        "body": {
+          "en": "The following routes are implemented in the source. Choose the input that matches your task and keep the resulting artifact with your project.",
+          "zh": "以下路径已有源码实现。按任务选择输入，并把生成的结果与项目一起保存。"
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "en": "Connect the pieces",
+            "zh": "输入与输出"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "Configuration",
+          "zh": "配置"
+        },
+        "body": {
+          "en": "WENTI_BASE_URL and WENTI_API_KEY enable the model path; WENTI_MODEL selects its model. --dry-run forces local scoring even when credentials exist. rubric.yaml weights sentence structure and wording at 0.3 each, rhythm and perspective at 0.2 each.",
+          "zh": "WENTI_BASE_URL 与 WENTI_API_KEY 启用模型路径，WENTI_MODEL 指定模型。即使已有凭据，--dry-run 也强制本地评分。rubric.yaml 中句式和用词各占 0.3，节奏和视角各占 0.2。"
+        }
+      },
+      {
+        "title": {
+          "en": "Further use",
+          "zh": "进一步使用"
+        },
+        "body": {
+          "en": "The CLI exposes the following operations. Commands after the example use your own paths or identifiers.",
+          "zh": "CLI 提供以下操作。示例之外的命令需要替换成你的文件路径或标识。"
+        },
+        "code": "wenti list\nwenti score draft.md --pack sanlian --dry-run --json\n# Model-backed rewrite uses the configured endpoint:\nwenti rewrite draft.md --pack sanlian"
+      }
+    ]
+  }
 }

@@ -1,0 +1,78 @@
+{
+  "name": "wenti",
+  "tagline": "Make editorial feedback repeatable across drafts.",
+  "architecture": {
+    "title": "How Wenti works",
+    "nodes": [
+      {
+        "title": "Editorial pack",
+        "detail": "wenti/packs"
+      },
+      {
+        "title": "Draft text",
+        "detail": "User-authored input"
+      },
+      {
+        "title": "Rubric scorer",
+        "detail": "wenti/scorer/score.py"
+      },
+      {
+        "title": "Score / suggestions",
+        "detail": "Four dimensions and total"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  "process": {
+    "title": "From input to a useful result",
+    "steps": [
+      {
+        "title": "Read original draft",
+        "detail": "Complete text in script"
+      },
+      {
+        "title": "Apply local rubric",
+        "detail": "Four heuristic dimensions"
+      },
+      {
+        "title": "Report score",
+        "detail": "Marked dry_run=true"
+      }
+    ],
+    "result": "The recorded score is a deterministic heuristic result for the supplied text."
+  },
+  "integrations": {
+    "title": "Supported input and output routes",
+    "items": [
+      {
+        "title": "Chinese draft",
+        "detail": "Local text input"
+      },
+      {
+        "title": "sanlian pack",
+        "detail": "Bundled project editorial profile"
+      },
+      {
+        "title": "Local heuristics",
+        "detail": "Explicit --dry-run route"
+      },
+      {
+        "title": "Compatible model API",
+        "detail": "Optional scoring / rewriting"
+      }
+    ]
+  }
+}

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "wenti"
 version = "0.1.0"
-description = "正向中文长文体 taste 库 — 把三联生活周刊体这样的编辑视角做成创作者 Skill。"
+description = "Apply a packaged Chinese long-form editorial rubric to drafts using local heuristics or a configured model evaluator."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"

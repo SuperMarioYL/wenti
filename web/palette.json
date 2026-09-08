@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "e656c7-e76a89-ebacf6-daa7cbf70a22",
+  "identity": "https://github.com/supermarioyl/wenti",
+  "primary": "#e656c7",
+  "secondary": "#e76a89",
+  "highlight": "#ebacf6",
+  "dark": {
+    "bg": "#0a0711",
+    "panel": "#13101d",
+    "code": "#140d1b",
+    "ink": "#fbeefd",
+    "muted": "#b29cbe",
+    "line": "#3a1839",
+    "primary": "#e656c7",
+    "secondary": "#e76a89",
+    "highlight": "#ebacf6",
+    "accent": "#e656c7",
+    "buttonStart": "#bf47a5",
+    "buttonEnd": "#ba566f",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#fef9fd",
+    "panel": "#fef7fc",
+    "code": "#fdf3fb",
+    "ink": "#27162b",
+    "muted": "#725e81",
+    "line": "#f7cbee",
+    "primary": "#b6449d",
+    "secondary": "#b2526a",
+    "highlight": "#896490",
+    "accent": "#b6449d",
+    "buttonStart": "#bf47a5",
+    "buttonEnd": "#ba566f",
+    "buttonText": "#ffffff"
+  }
+}

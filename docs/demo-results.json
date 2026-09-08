@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "source_revision": "eca181d3676abd7d6a8c27898836843438c60d7a",
+  "scope": "Local heuristic scoring of an original short Chinese fixture using the bundled sanlian pack; no model judgment, rewrite or measured editorial improvement.",
+  "steps": [
+    {
+      "label": "Recorded run",
+      "body": "Local heuristic scoring of an original short Chinese fixture using the bundled sanlian pack; no model judgment, rewrite or measured editorial improvement.",
+      "command": ".venv/bin/python examples/presentation-demo.py",
+      "output": "{\n  \"input\": \"清晨，菜市场的灯还亮着。老周把白菜码在摊位上，水汽从叶脉间慢慢散开。\\n\\n街道醒了。\\n\\n他为什么还留在这里？女儿的信压在棋盘下面，时间在纸角留下浅浅的褶皱。\",\n  \"pack\": \"sanlian\",\n  \"dry_run\": true,\n  \"sub_scores\": {\n    \"句式\": 2.0,\n    \"用词\": 4.1,\n    \"节奏\": 2.5,\n    \"视角\": 2.5\n  },\n  \"total\": 2.83\n}"
+    }
+  ]
+}
