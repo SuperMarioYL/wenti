@@ -16,6 +16,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from . import __version__
 from .packs import list_packs, load_pack
 from .scorer import load_rubric, rewrite_draft, score_draft
 
@@ -26,6 +27,12 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+
+
+def _version_callback(value: Optional[bool]) -> None:
+    if value:
+        console.print(f"wenti, version {__version__}")
+        raise typer.Exit()
 
 
 @app.command("list")
@@ -101,7 +108,15 @@ def rewrite(
 
 
 @app.callback()
-def main() -> None:
+def main(
+    version: Optional[bool] = typer.Option(
+        None,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="显示版本并退出。",
+    ),
+) -> None:
     """Wenti — 给 agent 装上一种可命名的中文长文体。"""
     return
 

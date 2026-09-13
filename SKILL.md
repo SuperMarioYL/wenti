@@ -1,6 +1,6 @@
 ---
 name: wenti
-version: 0.1.0
+version: 0.2.0
 description: |
   正向中文长文体 taste 库。把三联生活周刊体这样的编辑视角做成 curated pack
   （voice card + few-shots + 风格评分 rubric），让一个 agent 跨篇保持同一种
@@ -23,7 +23,7 @@ env:
   - WENTI_MODEL: 可选，模型名（默认 qwen-max）
 notes:
   - 未设 WENTI_BASE_URL/WENTI_API_KEY 时自动走 dry-run 启发式打分（本地、不调模型），CLI 与测试均可离线运行。
-  - dry-run 的分数有区分度（bare ~1.3 / 三联体 ~3.8），可用于 rubric 自检；调真实模型时方向一致。
+  - dry-run 的分数有区分度（bare ~1.1 / 三联体 ~3.8），可用于 rubric 自检；调真实模型时方向一致。
 ---
 
 # Wenti — creator Skill for 中文长文体
@@ -82,8 +82,8 @@ wenti rewrite draft.md --pack sanlian                 # -> 三联体重写稿
 | 节奏 | 0.2 | 段长起伏、短段收束、有停顿 |
 | 视角 | 0.2 | 第一人称旁观 + 具体时空坐标 |
 
-`total = Σ(weight_i × sub_score_i)`，0-5。bare-model 稿 ~1.3，三联体 pack 稿 ~3.8
-（见 `examples/before_after.md`，lift +2.44，四个维度全抬升）。
+`total = Σ(weight_i × sub_score_i)`，0-5。bare-model 稿 ~1.1，三联体 pack 稿 ~3.8
+（见 `examples/before_after.md`，lift +2.70，四个维度全抬升）。
 
 ## 边界（v0.1 out of scope，agent 不要假装会）
 

@@ -185,3 +185,127 @@ def test_bare_draft_scores_low(pack, rubric):
 def test_sanlian_draft_scores_above_three(pack, rubric):
     styled = score_draft(SANLIAN_DRAFT, pack, rubric, dry_run=True)
     assert styled.total >= 3.5
+
+
+# --- suggestion targeting (v0.2.0: the two LOWEST dims, not the first two) --
+
+
+def test_suggestions_target_two_lowest_dims(pack, rubric):
+    """Suggestions must address the two lowest-scoring dimensions, not the
+    first two in rubric order. On the styled draft 节奏 (2.6) is the weakest
+    yet pre-v0.2.0 suggestions always named 句式/用词."""
+    report = score_draft(SANLIAN_DRAFT, pack, rubric, dry_run=True)
+    lowest = sorted(report.sub_scores.items(), key=lambda kv: kv[1])[:2]
+    assert sorted(s.dim for s in report.suggestions) == sorted(d for d, _ in lowest)
+    # the concrete case: 节奏 must be addressed, 用词 (a high scorer) must not
+    dims = {s.dim for s in report.suggestions}
+    assert "节奏" in dims
+    assert "用词" not in dims
+
+
+def test_suggestions_lowest_dims_on_bare_draft(pack, rubric):
+    """The bare draft's two lowest ARE 句式/用词 — the pre-v0.2.0 output
+    happened to be right here; it must stay right."""
+    report = score_draft(BARE_DRAFT, pack, rubric, dry_run=True)
+    lowest = sorted(report.sub_scores.items(), key=lambda kv: kv[1])[:2]
+    assert sorted(s.dim for s in report.suggestions) == sorted(d for d, _ in lowest)
+
+
+def test_suggestions_tie_break_follows_rubric_order(pack, rubric):
+    """Tied scores resolve deterministically in rubric insertion order."""
+    from wenti.scorer.score import Suggestion, _heuristic_suggestions
+
+    notes = {"句式": ["a"], "用词": ["b"], "节奏": ["c"], "视角": ["d"]}
+    sub_scores = {"句式": 2.0, "用词": 2.0, "节奏": 1.0, "视角": 4.0}
+    out = _heuristic_suggestions(notes, sub_scores, pack)
+    assert [s.dim for s in out] == ["节奏", "句式"]
+
+
+# --- model path contract (v0.2.0: clamp + tolerant extraction) --------------
+
+
+class _FakeMessage:
+    def __init__(self, content: str):
+        self.content = content
+
+
+class _FakeChoice:
+    def __init__(self, content: str):
+        self.message = _FakeMessage(content)
+
+
+class _FakeResponse:
+    def __init__(self, content: str):
+        self.choices = [_FakeChoice(content)]
+
+
+class _FakeCompletions:
+    def __init__(self, content: str):
+        self._content = content
+
+    def create(self, **kw):
+        return _FakeResponse(self._content)
+
+
+class _FakeChat:
+    def __init__(self, content: str):
+        self.completions = _FakeCompletions(content)
+
+
+class _FakeClient:
+    """Mimics the OpenAI-compatible surface score.py calls:
+    client.chat.completions.create(...) -> .choices[0].message.content"""
+
+    def __init__(self, content: str):
+        self.chat = _FakeChat(content)
+
+
+def test_model_scores_clamped_to_rubric_scale(pack, rubric):
+    """A judge that misreads the 0-5 scale (e.g. answers 0-10) must not break
+    the ScoreReport 0-5 contract (schema.yaml)."""
+    inflated = _FakeClient(
+        '{"sub_scores": {"句式": 8.7, "用词": 9.2, "节奏": 7.5, "视角": 8.0},'
+        ' "suggestions": []}'
+    )
+    r = score_draft("一段测试文本。", pack, rubric, dry_run=False, client=inflated)
+    for v in r.sub_scores.values():
+        assert 0.0 <= v <= 5.0
+    assert r.total <= 5.0
+
+    negative = _FakeClient(
+        '{"sub_scores": {"句式": -3, "用词": 2, "节奏": 1, "视角": 0},'
+        ' "suggestions": []}'
+    )
+    r = score_draft("一段测试文本。", pack, rubric, dry_run=False, client=negative)
+    assert r.sub_scores["句式"] == 0.0
+
+    in_range = _FakeClient(
+        '{"sub_scores": {"句式": 3.5, "用词": 4.0, "节奏": 2.5, "视角": 3.0},'
+        ' "suggestions": []}'
+    )
+    r = score_draft("一段测试文本。", pack, rubric, dry_run=False, client=in_range)
+    assert r.sub_scores["句式"] == 3.5
+
+
+def test_model_path_survives_fenced_json_with_trailing_prose(pack, rubric):
+    """A fenced judge response with prose after the fence must still yield a
+    report, not a JSONDecodeError traceback."""
+    noisy = _FakeClient(
+        '```json\n'
+        '{"sub_scores": {"句式": 3.0, "用词": 4.0, "节奏": 2.5, "视角": 3.0},'
+        ' "suggestions": [{"dim": "节奏", "issue": "段长偏均", "rewrite": "加短段收束"}]}'
+        '\n```\n以上是评分结果。'
+    )
+    r = score_draft("一段测试文本。", pack, rubric, dry_run=False, client=noisy)
+    assert r.dry_run is False
+    assert r.sub_scores["用词"] == 4.0
+    assert r.suggestions[0].dim == "节奏"
+
+
+def test_extract_json_shapes():
+    from wenti.scorer.score import _extract_json
+
+    assert _extract_json('{"a": 1}') == {"a": 1}
+    assert _extract_json('```json\n{"a": 1}\n```') == {"a": 1}
+    assert _extract_json('```json\n{"a": 1}\n```\n以上是评分。') == {"a": 1}
+    assert _extract_json('好的，这是评分结果：{"a": 2}') == {"a": 2}

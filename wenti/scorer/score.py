@@ -232,7 +232,7 @@ def _heuristic_score(draft: str, pack: WentiPack, rubric: dict) -> ScoreReport:
         sub_scores[dim] = round(s, 2)
         notes_by_dim[dim] = notes
     total = _weighted_total(sub_scores, dims)
-    suggestions = _heuristic_suggestions(notes_by_dim, pack)
+    suggestions = _heuristic_suggestions(notes_by_dim, sub_scores, pack)
     return ScoreReport(
         pack=pack.name,
         draft=draft,
@@ -247,11 +247,21 @@ def _weighted_total(sub_scores: dict[str, float], dims: dict) -> float:
     return sum(sub_scores[d] * dims[d].get("weight", 0) for d in dims)
 
 
-def _heuristic_suggestions(notes_by_dim: dict[str, list[str]], pack: WentiPack) -> list[Suggestion]:
-    """Pick the two lowest-scoring dims and offer a voiced rewrite cue."""
+def _heuristic_suggestions(
+    notes_by_dim: dict[str, list[str]],
+    sub_scores: dict[str, float],
+    pack: WentiPack,
+) -> list[Suggestion]:
+    """Offer a voiced rewrite cue for the two lowest-scoring dims.
+
+    Ranking is by sub_score ascending; ties keep rubric insertion order
+    (sorted is stable), so the selection is deterministic.
+    """
+    ordered = sorted(notes_by_dim, key=lambda dim: sub_scores.get(dim, 5.0))
     out: list[Suggestion] = []
     exemplar = pack.few_shots[0].text.strip()[:60] if pack.few_shots else ""
-    for dim, notes in list(notes_by_dim.items())[:2]:
+    for dim in ordered[:2]:
+        notes = notes_by_dim[dim]
         issue = "；".join(notes) if notes else "该维度未过线"
         rewrite = (
             f"参考三联体范例开头改写：{exemplar}……"
@@ -271,12 +281,15 @@ def _extract_json(text: str) -> dict[str, Any]:
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
-    # fall back to first {...} block
-    if not text.startswith("{"):
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # fenced JSON with trailing prose, or leading prose before the JSON:
+        # fall back to the first {...} block.
         m = re.search(r"\{.*\}", text, re.S)
         if m:
-            text = m.group(0)
-    return json.loads(text)
+            return json.loads(m.group(0))
+        raise
 
 
 def _build_client(base_url: str | None, api_key: str | None):
@@ -312,8 +325,10 @@ def _model_score(
     content = resp.choices[0].message.content or "{}"
     data = _extract_json(content)
     dims = rubric["dimensions"]
+    # clamp to the rubric's 0-5 scale — a judge that misreads the scale
+    # (e.g. answers on 0-10) must not break the ScoreReport contract.
     sub_scores = {
-        d: round(float(data.get("sub_scores", {}).get(d, 2.5)), 2) for d in dims
+        d: round(_clamp(float(data.get("sub_scores", {}).get(d, 2.5))), 2) for d in dims
     }
     suggestions = [
         Suggestion(
