@@ -11,12 +11,12 @@
   "meta": {
     "visual_style": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "content_version": "v0.2.0"
+    "content_version": "v0.3.0"
   },
   "footer": {
     "tag": {
-      "en": "wenti v0.2.0 · a curated Chinese editorial-voice library",
-      "zh": "wenti v0.2.0 · 正向中文长文体 taste 库"
+      "en": "wenti v0.3.0 · a curated Chinese editorial-voice library",
+      "zh": "wenti v0.3.0 · 正向中文长文体 taste 库"
     }
   },
   "hero": {
