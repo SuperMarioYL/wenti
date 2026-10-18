@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wenti"
-version = "0.2.0"
+version = "0.3.0"
 description = "Apply a packaged Chinese long-form editorial rubric to drafts using local heuristics or a configured model evaluator."
 readme = "README.md"
 license = "MIT"

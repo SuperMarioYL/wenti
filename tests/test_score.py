@@ -309,3 +309,109 @@ def test_extract_json_shapes():
     assert _extract_json('```json\n{"a": 1}\n```') == {"a": 1}
     assert _extract_json('```json\n{"a": 1}\n```\n以上是评分。') == {"a": 1}
     assert _extract_json('好的，这是评分结果：{"a": 2}') == {"a": 2}
+
+
+# --- model path structural tolerance (v0.3.0: shape-of-structure drift) ------
+#
+# v0.2.0 made the model path tolerant to shape-of-TEXT drift (fences, prose).
+# v0.3.0 extends the same contract to shape-of-STRUCTURE drift: a judge that
+# answers with a non-object payload, a non-object sub_scores, a non-numeric
+# dim value, or non-dict suggestion items must yield a report, not a
+# AttributeError/ValueError traceback. All six shapes below were reproduced
+# as crashes against v0.2.0 (2026-10-19).
+
+
+def test_model_path_survives_malformed_judge_payloads(pack, rubric):
+    """Six reproduced v0.2.0 crash payloads must each return a ScoreReport."""
+    payloads = [
+        '[{"sub_scores": {"句式": 3.0}}]',  # top-level JSON array
+        '"评分完成"',  # top-level JSON string
+        '{"sub_scores": "句式 3 分，用词 4 分"}',  # sub_scores not an object
+        '{"sub_scores": null}',  # sub_scores null
+        '{"sub_scores": {"句式": "很好", "用词": 4.0, "节奏": 2.0, "视角": 3.0}}',  # non-numeric value
+        '{"sub_scores": {"句式": 3.0, "用词": 4.0, "节奏": 2.0, "视角": 3.0},'
+        ' "suggestions": ["节奏太平"]}',  # suggestion items are strings
+    ]
+    for payload in payloads:
+        r = score_draft(
+            "一段测试文本。", pack, rubric, dry_run=False, client=_FakeClient(payload)
+        )
+        assert r.dry_run is False
+        for v in r.sub_scores.values():
+            assert 0.0 <= v <= 5.0
+        assert 0.0 <= r.total <= 5.0
+
+
+def test_model_path_unparseable_dim_falls_back_to_midpoint(pack, rubric):
+    """A non-numeric dim value keeps the 2.5 midpoint; valid dims pass through."""
+    r = score_draft(
+        "一段测试文本。", pack, rubric, dry_run=False,
+        client=_FakeClient(
+            '{"sub_scores": {"句式": "很好", "用词": 4.0, "节奏": 2.0, "视角": 3.0}}'
+        ),
+    )
+    assert r.sub_scores["句式"] == 2.5
+    assert r.sub_scores["用词"] == 4.0
+
+
+def test_model_path_mixed_suggestions_keeps_dict_items(pack, rubric):
+    """Non-dict suggestion items are skipped; dict items still come through."""
+    r = score_draft(
+        "一段测试文本。", pack, rubric, dry_run=False,
+        client=_FakeClient(
+            '{"sub_scores": {"句式": 3.0, "用词": 4.0, "节奏": 2.0, "视角": 3.0},'
+            ' "suggestions": ["垃圾项", {"dim": "节奏", "issue": "段长偏均", "rewrite": "加短段收束"}]}'
+        ),
+    )
+    assert [s.dim for s in r.suggestions] == ["节奏"]
+    assert r.suggestions[0].issue == "段长偏均"
+
+
+# --- CLI model-path credentials guard (v0.3.0) -------------------------------
+
+from typer.testing import CliRunner
+
+from wenti.cli import app
+
+runner = CliRunner()
+
+
+def test_cli_score_model_path_without_credentials_fails_cleanly(monkeypatch, tmp_path):
+    """`wenti score --no-dry-run` without WENTI env keys must print an
+    actionable error naming this product's env vars, not an OpenAIError
+    traceback about OPENAI_API_KEY."""
+    draft = tmp_path / "draft.md"
+    draft.write_text("一段测试文本。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    result = runner.invoke(app, ["score", str(draft), "--no-dry-run"])
+    assert result.exit_code == 1
+    assert "WENTI_BASE_URL" in result.output
+    assert "WENTI_API_KEY" in result.output
+    assert "OpenAIError" not in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_rewrite_model_path_without_credentials_fails_cleanly(monkeypatch, tmp_path):
+    draft = tmp_path / "draft.md"
+    draft.write_text("一段测试文本。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    result = runner.invoke(app, ["rewrite", str(draft), "--no-dry-run"])
+    assert result.exit_code == 1
+    assert "WENTI_BASE_URL" in result.output
+    assert "WENTI_API_KEY" in result.output
+    assert "OpenAIError" not in result.output
+
+
+def test_cli_dry_run_paths_still_work_without_credentials(monkeypatch, tmp_path):
+    """The guard must not disturb the offline paths: explicit --dry-run and
+    auto-detected dry-run (no flag) both exit 0 without credentials."""
+    draft = tmp_path / "draft.md"
+    draft.write_text("一段测试文本。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    forced = runner.invoke(app, ["score", str(draft), "--dry-run"])
+    assert forced.exit_code == 0
+    auto = runner.invoke(app, ["score", str(draft)])
+    assert auto.exit_code == 0

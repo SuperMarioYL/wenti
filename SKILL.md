@@ -1,6 +1,6 @@
 ---
 name: wenti
-version: 0.2.0
+version: 0.3.0
 description: |
   正向中文长文体 taste 库。把三联生活周刊体这样的编辑视角做成 curated pack
   （voice card + few-shots + 风格评分 rubric），让一个 agent 跨篇保持同一种

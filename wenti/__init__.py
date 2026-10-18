@@ -6,5 +6,5 @@ Not an anti-slop filter — it installs a *named* editorial voice an agent
 can keep across a series.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["__version__"]

@@ -7,6 +7,7 @@ this entrypoint (see SKILL.md).
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -35,6 +36,25 @@ def _version_callback(value: Optional[bool]) -> None:
         raise typer.Exit()
 
 
+def _require_model_credentials() -> None:
+    """Fail cleanly when the model path was requested but no endpoint is set.
+
+    The library keeps auto dry-run detection and client injection, so this
+    guard lives in the CLI presentation layer: without it the OpenAI SDK
+    raises a traceback telling the user to set OPENAI_API_KEY — the wrong
+    env vars for this product.
+    """
+    if os.environ.get("WENTI_BASE_URL") and os.environ.get("WENTI_API_KEY"):
+        return
+    console.print(
+        "[red]模型路径需要配置端点：未检测到 WENTI_BASE_URL / WENTI_API_KEY。[/red]\n"
+        "export WENTI_BASE_URL=...   # OpenAI-compatible 端点\n"
+        "export WENTI_API_KEY=...    # 上述端点的 api key\n"
+        "或者改用离线启发式：去掉 --no-dry-run（或加 --dry-run）。"
+    )
+    raise typer.Exit(code=1)
+
+
 @app.command("list")
 def list_cmd() -> None:
     """列出可用的 文体 pack。"""
@@ -60,6 +80,8 @@ def score(
     json_out: bool = typer.Option(False, "--json", help="输出 JSON 而非 rich 报告"),
 ) -> None:
     """对一份草稿按 文体 pack 的 rubric 打风格分。"""
+    if dry_run is False:
+        _require_model_credentials()
     text = draft.read_text(encoding="utf-8")
     wp = load_pack(pack)
     rubric = load_rubric()
@@ -101,6 +123,8 @@ def rewrite(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="模型名"),
 ) -> None:
     """把一份草稿按 文体 pack 重写（三联体 voiced）。"""
+    if dry_run is False:
+        _require_model_credentials()
     text = draft.read_text(encoding="utf-8")
     wp = load_pack(pack)
     out = rewrite_draft(text, wp, dry_run=dry_run, model=model)

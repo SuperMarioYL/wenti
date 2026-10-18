@@ -324,19 +324,36 @@ def _model_score(
     )
     content = resp.choices[0].message.content or "{}"
     data = _extract_json(content)
+    if not isinstance(data, dict):
+        # judge drift: a non-object payload (array/string/number) carries no
+        # scoring data — fall through to the midpoint defaults below instead
+        # of crashing the paid path.
+        data = {}
+    raw_sub = data.get("sub_scores")
+    if not isinstance(raw_sub, dict):
+        raw_sub = {}
     dims = rubric["dimensions"]
     # clamp to the rubric's 0-5 scale — a judge that misreads the scale
     # (e.g. answers on 0-10) must not break the ScoreReport contract.
-    sub_scores = {
-        d: round(_clamp(float(data.get("sub_scores", {}).get(d, 2.5))), 2) for d in dims
-    }
+    sub_scores = {}
+    for d in dims:
+        try:
+            value = float(raw_sub.get(d, 2.5))
+        except (TypeError, ValueError):
+            # a non-numeric dim value ("很好") keeps the midpoint default
+            value = 2.5
+        sub_scores[d] = round(_clamp(value), 2)
+    raw_suggestions = data.get("suggestions")
+    if not isinstance(raw_suggestions, list):
+        raw_suggestions = []
     suggestions = [
         Suggestion(
             dim=s.get("dim", ""),
             issue=s.get("issue", ""),
             rewrite=s.get("rewrite", ""),
         )
-        for s in (data.get("suggestions") or [])[:3]
+        for s in raw_suggestions[:3]
+        if isinstance(s, dict)
     ]
     total = _weighted_total(sub_scores, dims)
     return ScoreReport(

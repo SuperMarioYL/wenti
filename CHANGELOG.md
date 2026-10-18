@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-19
+
+### Fixed
+
+- **model 路径对结构漂移的 judge 返回不再崩溃**：`_model_score` 此前假定
+  解析出的 JSON 是规范对象——judge 返回顶层数组/字符串、`sub_scores` 为
+  字符串或 null、分值为非数字字符串、suggestions 项为字符串时，直接抛
+  AttributeError/ValueError（离线 mock 复现 6 种形态）；现防御性收窄——
+  非对象按空处理、非数字维度回落 2.5 中位分、非对象 suggestion 项跳过，
+  v0.2.0 的 0-5 钳制不变，规范返回的行为零变化。
+- **CLI 模型路径缺凭据时给出干净报错**：`wenti score|rewrite --no-dry-run`
+  在未设 `WENTI_BASE_URL`/`WENTI_API_KEY` 时，此前直接抛 openai.OpenAIError
+  堆栈（且提示设置 OPENAI_API_KEY，与本产品的变量名不符）；现打印一行
+  可执行提示（含离线 dry-run 替代方案）并以退出码 1 结束。库的自动
+  dry-run 探测与 client 注入契约不变。
+
 ## [0.2.0] - 2026-09-14
 
 ### Fixed
@@ -43,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `wenti list|score|rewrite` CLI（typer + rich）。
 - `SKILL.md` agent 调用契约与 `examples/before_after.md` before/after demo。
 
-[Unreleased]: https://github.com/SuperMarioYL/wenti/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SuperMarioYL/wenti/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SuperMarioYL/wenti/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuperMarioYL/wenti/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuperMarioYL/wenti/releases/tag/v0.1.0
