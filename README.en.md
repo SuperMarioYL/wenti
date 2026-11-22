@@ -104,6 +104,8 @@ wenti rewrite draft.md --pack sanlian
 
 WENTI_BASE_URL and WENTI_API_KEY enable the model path; WENTI_MODEL selects its model. --dry-run forces local scoring even when credentials exist. rubric.yaml weights sentence structure and wording at 0.3 each, rhythm and perspective at 0.2 each.
 
+A library call that passes `client` (or `base_url` + `api_key`) uses the model path even without environment variables. When the judge returns no parseable score, the report names the dimensions filled from the 2.5 midpoint in `warnings`, and the CLI prints that warning. An unknown or unbundled `--pack` lists the available packs and exits with code 1 instead of raising a traceback. A dry-run `rewrite` returns the draft unchanged.
+
 ## Integrations and responsibilities
 
 <picture>

@@ -18,8 +18,8 @@ from rich.table import Table
 from rich.text import Text
 
 from . import __version__
-from .packs import list_packs, load_pack
-from .scorer import load_rubric, rewrite_draft, score_draft
+from .packs import WentiPack, list_packs, load_pack
+from .scorer import load_rubric, resolve_dry_run, rewrite_draft, score_draft
 
 app = typer.Typer(
     name="wenti",
@@ -55,6 +55,25 @@ def _require_model_credentials() -> None:
     raise typer.Exit(code=1)
 
 
+def _load_pack_or_exit(name: str) -> WentiPack:
+    """Load a pack, or render the available ids instead of a traceback.
+
+    ``wenti list`` advertises premium packs that are not bundled, and a typo is
+    the common case, so the command — not the loader — owns this message.
+    """
+    try:
+        return load_pack(name)
+    except FileNotFoundError:
+        packs = list_packs()
+        available = "、".join(p["name"] for p in packs if p.get("available"))
+        unavailable = "、".join(p["name"] for p in packs if not p.get("available"))
+        console.print(f"[red]未知或未随包发布的 pack：{name}[/red]")
+        console.print(f"可用 pack：{available}")
+        if unavailable:
+            console.print(f"未随包发布（premium / 后续）：{unavailable}")
+        raise typer.Exit(code=1)
+
+
 @app.command("list")
 def list_cmd() -> None:
     """列出可用的 文体 pack。"""
@@ -83,13 +102,16 @@ def score(
     if dry_run is False:
         _require_model_credentials()
     text = draft.read_text(encoding="utf-8")
-    wp = load_pack(pack)
+    wp = _load_pack_or_exit(pack)
     rubric = load_rubric()
     report = score_draft(text, wp, rubric, dry_run=dry_run, model=model)
 
     if json_out:
         console.print_json(data=report.to_dict())
         return
+
+    for warning in report.warnings:
+        console.print(f"[yellow]警告：{warning}[/yellow]")
 
     mode = "[yellow]dry-run（本地启发式，未调模型）[/yellow]" if report.dry_run else "[green]model[/green]"
     sub = Table.grid(padding=(0, 1))
@@ -126,8 +148,13 @@ def rewrite(
     if dry_run is False:
         _require_model_credentials()
     text = draft.read_text(encoding="utf-8")
-    wp = load_pack(pack)
+    wp = _load_pack_or_exit(pack)
     out = rewrite_draft(text, wp, dry_run=dry_run, model=model)
+    if resolve_dry_run(dry_run):
+        console.print(
+            "[yellow]dry-run：未调用模型，原稿返回"
+            "（设 WENTI_API_KEY/WENTI_BASE_URL 走真实 rewrite）[/yellow]"
+        )
     console.print(Panel(out, title=f"rewrite · {wp.lineage}", border_style="#5E5CE6"))
 
 

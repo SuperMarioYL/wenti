@@ -42,3 +42,5 @@ ScoreReport:
     total:       { type: float, desc: "加权总分 0-5" }
     suggestions: { type: list, desc: "rewrite 建议，每项 {dim, issue, rewrite}" }
     dry_run:     { type: bool, desc: "True=本地启发式打分未调用模型" }
+  optional_fields:
+    warnings:    { type: list, desc: "模型路径的诚实提示：judge 未返回可解析分数的维度会用 2.5 中位分并在 warnings 中点名，绝不静默冒充分数" }

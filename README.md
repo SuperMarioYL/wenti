@@ -104,6 +104,8 @@ wenti rewrite draft.md --pack sanlian
 
 WENTI_BASE_URL 与 WENTI_API_KEY 启用模型路径，WENTI_MODEL 指定模型。即使已有凭据，--dry-run 也强制本地评分。rubric.yaml 中句式和用词各占 0.3，节奏和视角各占 0.2。
 
+库调用传入 `client`（或 `base_url` + `api_key`）即走模型路径，即使未设环境变量；judge 返回不含可解析分数时，报告在 `warnings` 中点名回落 2.5 中位分的维度，CLI 会打印该提示。未知或未随包发布的 `--pack` 会列出可用 pack 并以退出码 1 结束，不抛堆栈。dry-run 的 `rewrite` 原样返回草稿。
+
 ## 集成与职责分工
 
 <picture>

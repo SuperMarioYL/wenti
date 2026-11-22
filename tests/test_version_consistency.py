@@ -9,6 +9,7 @@ shelling out to binaries a GH runner may lack.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -62,6 +63,18 @@ def test_changelog_link_refs_are_defined():
         f"[Unreleased] must compare against v{__version__}...HEAD, "
         f"got {unreleased.group(1)}"
     )
+
+
+def test_site_content_version_matches_package():
+    """The Pages site is a shipped surface: its content version and footer
+    tags must name the same release as the package."""
+    site = json.loads((REPO / "web" / "site.json").read_text(encoding="utf-8"))
+    assert site["meta"]["content_version"] == f"v{__version__}", (
+        "web/site.json meta.content_version drifted"
+    )
+    tags = site["footer"]["tag"]
+    assert __version__ in tags["en"], "footer en tag drifted"
+    assert __version__ in tags["zh"], "footer zh tag drifted"
 
 
 def test_cli_version_flag():

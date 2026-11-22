@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from wenti.packs import WentiPack, list_packs, load_pack
-from wenti.scorer import load_rubric, score_draft
+from wenti.scorer import load_rubric, resolve_dry_run, rewrite_draft, score_draft
 from wenti.scorer.score import ScoreReport, _heuristic_score
 
 REPO = Path(__file__).resolve().parent.parent
@@ -415,3 +415,143 @@ def test_cli_dry_run_paths_still_work_without_credentials(monkeypatch, tmp_path)
     assert forced.exit_code == 0
     auto = runner.invoke(app, ["score", str(draft)])
     assert auto.exit_code == 0
+
+
+# --- v0.4.0: injected client selects the model path -------------------------
+#
+# score_draft's docstring promised auto dry-run only when the env vars are
+# unset *and* no client was passed in, but _resolve_dry_run only read the env.
+# v0.3.0 returned heuristic sub_scores for score_draft(..., client=fake) with
+# the env cleared (reproduced 2026-11-23: 1.5/1.5/2.0/0.5 for a judge that
+# answered 4.4/4.5/4.6/4.7).
+
+_WELL_FORMED = (
+    '{"sub_scores": {"句式": 4.4, "用词": 4.5, "节奏": 4.6, "视角": 4.7},'
+    ' "suggestions": [{"dim": "节奏", "issue": "ok", "rewrite": "ok"}]}'
+)
+
+
+def test_injected_client_selects_model_path_without_env(monkeypatch, pack, rubric):
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    report = score_draft("一段测试文本。", pack, rubric, client=_FakeClient(_WELL_FORMED))
+    assert report.dry_run is False
+    assert report.sub_scores["句式"] == 4.4
+    assert report.warnings == []
+
+
+def test_injected_client_rewrite_without_env(monkeypatch, pack):
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    assert rewrite_draft("原稿正文。", pack, client=_FakeClient("三联体改写稿。")) == "三联体改写稿。"
+
+
+def test_explicit_credentials_select_model_path():
+    assert resolve_dry_run(None, base_url="https://example.invalid/v1", api_key="k") is False
+    # a lone credential is not enough — the env fallback still applies
+    assert resolve_dry_run(None, api_key="k") is True
+    assert resolve_dry_run(True, client=object()) is True
+
+
+# --- v0.4.0: unparseable judge replies warn instead of crashing --------------
+#
+# _extract_json's greedy `{.*}` fallback raised JSONDecodeError for a prose-only
+# reply and for a fenced object followed by prose containing braces; _model_score
+# did not catch it, so the paid path died. When nothing parsed, an all-2.5
+# report was also presented as measured.
+
+
+def test_prose_only_judge_reply_returns_report_with_warning(pack, rubric):
+    report = score_draft(
+        "一段测试文本。", pack, rubric, dry_run=False,
+        client=_FakeClient("抱歉，我无法按此评分。"),
+    )
+    assert report.dry_run is False
+    assert set(report.sub_scores.values()) == {2.5}
+    assert report.total == 2.5
+    assert report.warnings and "2.5" in report.warnings[0]
+
+
+def test_fenced_json_with_braces_in_trailing_prose_parses(pack, rubric):
+    payload = (
+        '```json\n'
+        '{"sub_scores": {"句式": 3.0, "用词": 4.0, "节奏": 2.0, "视角": 3.0}}\n'
+        '```\n以上是{评分}结果。'
+    )
+    report = score_draft("一段测试文本。", pack, rubric, dry_run=False, client=_FakeClient(payload))
+    assert report.sub_scores["用词"] == 4.0
+    assert report.warnings == []
+
+
+def test_partial_sub_scores_warn_missing_dims(pack, rubric):
+    report = score_draft(
+        "一段测试文本。", pack, rubric, dry_run=False,
+        client=_FakeClient('{"sub_scores": {"句式": 3.0}}'),
+    )
+    assert report.sub_scores["句式"] == 3.0
+    assert report.sub_scores["节奏"] == 2.5
+    assert len(report.warnings) == 1
+    assert "节奏" in report.warnings[0]
+    assert "句式" not in report.warnings[0]
+
+
+def test_extract_json_returns_empty_when_nothing_parses():
+    from wenti.scorer.score import _extract_json
+
+    assert _extract_json("抱歉，我无法按此评分。") == {}
+    assert _extract_json('好的 {"a": 1} 另外 {"b": 2}') == {"a": 1}
+
+
+# --- v0.4.0: unknown / premium pack errors ----------------------------------
+
+
+def test_cli_unknown_pack_errors_cleanly(monkeypatch, tmp_path):
+    draft = tmp_path / "draft.md"
+    draft.write_text("一段测试文本。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    for command in ("score", "rewrite"):
+        result = runner.invoke(app, [command, str(draft), "--pack", "bogus"])
+        assert result.exit_code == 1
+        assert "bogus" in result.output
+        assert "sanlian" in result.output
+        assert "Traceback" not in result.output
+        assert "FileNotFoundError" not in result.output
+
+
+def test_cli_premium_pack_errors_cleanly(monkeypatch, tmp_path):
+    draft = tmp_path / "draft.md"
+    draft.write_text("一段测试文本。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    result = runner.invoke(app, ["score", str(draft), "--pack", "nanfangzhoumo"])
+    assert result.exit_code == 1
+    assert "nanfangzhoumo" in result.output
+    assert "sanlian" in result.output
+    assert "premium" in result.output
+    assert "Traceback" not in result.output
+
+
+# --- v0.4.0: dry-run rewrite returns the untouched draft --------------------
+
+
+def test_dry_run_rewrite_returns_original(pack):
+    text = "原稿第一段。\n\n原稿第二段。\n"
+    assert rewrite_draft(text, pack, dry_run=True) == text
+
+
+def test_cli_rewrite_dry_run_notice_not_in_document(monkeypatch, tmp_path):
+    draft = tmp_path / "draft.md"
+    draft.write_text("原稿第一段。", encoding="utf-8")
+    monkeypatch.delenv("WENTI_BASE_URL", raising=False)
+    monkeypatch.delenv("WENTI_API_KEY", raising=False)
+    result = runner.invoke(app, ["rewrite", str(draft), "--dry-run"])
+    assert result.exit_code == 0
+    assert "未调用模型" in result.output
+    # the notice is CLI output, not part of the rendered document panel
+    panel_body = "\n".join(
+        line for line in result.output.splitlines() if line.startswith("│")
+    )
+    assert "未调用模型" not in panel_body
+    assert "原稿第一段。" in panel_body
+

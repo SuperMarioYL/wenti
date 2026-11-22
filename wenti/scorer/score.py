@@ -46,6 +46,7 @@ class ScoreReport:
     total: float
     suggestions: list[Suggestion] = field(default_factory=list)
     dry_run: bool = True
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -55,6 +56,7 @@ class ScoreReport:
             "total": round(self.total, 2),
             "suggestions": [s.__dict__ for s in self.suggestions],
             "dry_run": self.dry_run,
+            "warnings": list(self.warnings),
         }
 
 
@@ -275,8 +277,15 @@ def _heuristic_suggestions(
 # --- model path -----------------------------------------------------------
 
 
-def _extract_json(text: str) -> dict[str, Any]:
-    """Tolerant JSON extraction from a model response."""
+def _extract_json(text: str) -> Any:
+    """Tolerant JSON extraction from a model response.
+
+    Handles bare JSON, a fenced block, and JSON embedded in prose. Trailing
+    prose may itself contain braces, so each ``{`` start is parsed in turn
+    instead of trusting one greedy match. Returns ``{}`` when the response
+    carries no parseable JSON at all, so the caller can still default rather
+    than crash.
+    """
     text = text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text)
@@ -284,12 +293,15 @@ def _extract_json(text: str) -> dict[str, Any]:
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        # fenced JSON with trailing prose, or leading prose before the JSON:
-        # fall back to the first {...} block.
-        m = re.search(r"\{.*\}", text, re.S)
-        if m:
-            return json.loads(m.group(0))
-        raise
+        pass
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", text):
+        try:
+            value, _ = decoder.raw_decode(text, match.start())
+        except json.JSONDecodeError:
+            continue
+        return value
+    return {}
 
 
 def _build_client(base_url: str | None, api_key: str | None):
@@ -336,12 +348,15 @@ def _model_score(
     # clamp to the rubric's 0-5 scale — a judge that misreads the scale
     # (e.g. answers on 0-10) must not break the ScoreReport contract.
     sub_scores = {}
+    defaulted: list[str] = []
     for d in dims:
+        raw_value = raw_sub.get(d)
         try:
-            value = float(raw_sub.get(d, 2.5))
+            value = float(raw_value)
         except (TypeError, ValueError):
-            # a non-numeric dim value ("很好") keeps the midpoint default
+            # missing or non-numeric dim value ("很好") keeps the midpoint
             value = 2.5
+            defaulted.append(d)
         sub_scores[d] = round(_clamp(value), 2)
     raw_suggestions = data.get("suggestions")
     if not isinstance(raw_suggestions, list):
@@ -356,6 +371,14 @@ def _model_score(
         if isinstance(s, dict)
     ]
     total = _weighted_total(sub_scores, dims)
+    warnings: list[str] = []
+    if defaulted:
+        # Never present a midpoint fill as a measured verdict.
+        warnings.append(
+            "judge 返回未提供可解析分数："
+            + "、".join(defaulted)
+            + " 使用 2.5 中位分（建议重跑或检查模型输出）"
+        )
     return ScoreReport(
         pack=pack.name,
         draft=draft,
@@ -363,12 +386,28 @@ def _model_score(
         total=round(total, 2),
         suggestions=suggestions,
         dry_run=False,
+        warnings=warnings,
     )
 
 
-def _resolve_dry_run(dry_run: bool | None) -> bool:
+def resolve_dry_run(
+    dry_run: bool | None,
+    *,
+    client: Any = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+) -> bool:
+    """Decide whether a call uses the offline heuristic.
+
+    An explicit ``dry_run`` always wins. Otherwise an injected client or
+    explicit ``base_url`` + ``api_key`` arguments select the model path; the
+    ``WENTI_BASE_URL`` / ``WENTI_API_KEY`` env vars are the fallback for
+    callers that configure nothing.
+    """
     if dry_run is not None:
         return dry_run
+    if client is not None or (base_url and api_key):
+        return False
     return not (os.environ.get("WENTI_BASE_URL") and os.environ.get("WENTI_API_KEY"))
 
 
@@ -385,12 +424,14 @@ def score_draft(
 ) -> ScoreReport:
     """Score a draft against a pack's rubric.
 
-    Auto-detects dry-run when ``WENTI_BASE_URL`` / ``WENTI_API_KEY`` are unset
-    *and* no client is passed in. Pass ``dry_run=True`` to force the offline
-    heuristic (used by tests and the no-key CLI path).
+    Auto-detects dry-run when no client / explicit credentials were passed in
+    and ``WENTI_BASE_URL`` / ``WENTI_API_KEY`` are unset. Pass ``dry_run=True``
+    to force the offline heuristic (used by tests and the no-key CLI path).
     """
     rubric = rubric or load_rubric()
-    use_dry = _resolve_dry_run(dry_run)
+    use_dry = resolve_dry_run(
+        dry_run, client=client, base_url=base_url, api_key=api_key
+    )
     if use_dry:
         return _heuristic_score(draft, pack, rubric)
     if client is None:
@@ -409,12 +450,17 @@ def rewrite_draft(
     base_url: str | None = None,
     api_key: str | None = None,
 ) -> str:
-    """Rewrite a draft in the pack's voice. Returns the rewritten text."""
-    use_dry = _resolve_dry_run(dry_run)
+    """Rewrite a draft in the pack's voice. Returns the rewritten text.
+
+    On the dry-run path the draft is returned unchanged — no model is called,
+    so there is nothing to rewrite. Callers that need to tell the user this is
+    a presentation concern (the CLI prints the notice).
+    """
+    use_dry = resolve_dry_run(
+        dry_run, client=client, base_url=base_url, api_key=api_key
+    )
     if use_dry:
-        # Honest no-model path: do not fake a rewrite. Return the original
-        # with a banner so the user knows no model was called.
-        return f"# [wenti dry-run] 未调用模型，原稿返回（设 WENTI_API_KEY/WENTI_BASE_URL 走真实 rewrite）\n\n{draft}"
+        return draft
     if client is None:
         client = _build_client(base_url, api_key)
     model = model or os.environ.get("WENTI_MODEL", "qwen-max")
@@ -436,6 +482,7 @@ __all__ = [
     "ScoreReport",
     "Suggestion",
     "load_rubric",
+    "resolve_dry_run",
     "score_draft",
     "rewrite_draft",
 ]

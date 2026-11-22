@@ -1,6 +1,6 @@
 ---
 name: wenti
-version: 0.3.0
+version: 0.4.0
 description: |
   正向中文长文体 taste 库。把三联生活周刊体这样的编辑视角做成 curated pack
   （voice card + few-shots + 风格评分 rubric），让一个 agent 跨篇保持同一种
@@ -69,9 +69,14 @@ wenti rewrite draft.md --pack sanlian                 # -> 三联体重写稿
   "sub_scores": {"句式": 3.0, "用词": 4.5, "节奏": 2.6, "视角": 5.0},
   "total": 3.77,
   "suggestions": [{"dim": "句式", "issue": "...", "rewrite": "..."}],
-  "dry_run": true
+  "dry_run": true,
+  "warnings": []
 }
 ```
+
+`warnings` 非空表示 judge 未返回可解析分数、报告中对应维度用了 2.5 中位分——
+此时不要把该分数当成实测结论。未知或未随包发布的 `--pack` 会列出可用 id 并
+以退出码 1 结束。
 
 ## rubric 维度与权重（mvp_plan §2，hash-locked）
 
